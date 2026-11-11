@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Радар новичков</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+<style>
+/* Раскладка: узкая шапка с вкладками, под ней три группы новичков по уровню риска. Строка = человек, шкала 90 дней с точками встреч. */
+:root{
+  --bg:#F2F5F1; --surface:#FFFFFF; --ink:#16201B; --muted:#56655D; --line:#D9E0DA; --soft:#E9EEE9;
+  --accent:#1E6B4B; --accent-ink:#FFFFFF;
+  --high:#B3261E; --high-bg:#FBE8E5; --mid:#8A5300; --mid-bg:#FFF0D2; --ok:#2F7A58; --ok-bg:#E3F1E9;
+  --font-body:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --font-display:'Unbounded','Onest',system-ui,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1511; --surface:#17201A; --ink:#E7EEE9; --muted:#9AABA1; --line:#2A362E; --soft:#202B24;
+  --accent:#5CC593; --accent-ink:#08140D;
+  --high:#FF9A90; --high-bg:#3B1B18; --mid:#F2B450; --mid-bg:#38290F; --ok:#6FD0A0; --ok-bg:#16301F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1511; --surface:#17201A; --ink:#E7EEE9; --muted:#9AABA1; --line:#2A362E; --soft:#202B24;
+  --accent:#5CC593; --accent-ink:#08140D;
+  --high:#FF9A90; --high-bg:#3B1B18; --mid:#F2B450; --mid-bg:#38290F; --ok:#6FD0A0; --ok-bg:#16301F; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.45;
+  padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto}
+h1,h2,h3{margin:0;font-weight:600;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+header.top{padding:20px 0 0;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.brand h1{font-family:var(--font-display);font-size:22px;letter-spacing:-.01em}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:16px;overflow-x:auto}
+nav.tabs a{padding:10px 14px;text-decoration:none;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-color:var(--accent)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:500;font-size:14px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:5px 9px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0 8px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;text-align:left}
+.tile b{font-family:var(--font-display);font-size:26px;font-weight:500;display:block;line-height:1.1}
+.tile span{font-size:13px;color:var(--muted)}
+.tile.high b{color:var(--high)} .tile.mid b{color:var(--mid)} .tile.low b{color:var(--ok)}
+.tile[aria-pressed="true"]{outline:2px solid var(--accent)}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+
+.group{margin-top:22px}
+.group>h2{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dot.high{background:var(--high)} .dot.mid{background:var(--mid)} .dot.low{background:var(--ok)}
+
+.row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:14px 18px;align-items:center;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+.row .who{min-width:0}
+.row .who b{display:block;font-weight:600}
+.row .who small{color:var(--muted)}
+.row .why{min-width:0;font-size:14px}
+.row .why .act{font-weight:600;display:block}
+.row .why .reason{color:var(--muted)}
+.row .go{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.score{font-variant-numeric:tabular-nums;font-weight:700;border-radius:999px;padding:2px 10px;font-size:13px;white-space:nowrap}
+.score.high{background:var(--high-bg);color:var(--high)} .score.mid{background:var(--mid-bg);color:var(--mid)} .score.low{background:var(--ok-bg);color:var(--ok)}
+
+.track{position:relative;height:6px;background:var(--soft);border-radius:3px;margin:12px 4px 18px}
+.track .fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);opacity:.35;border-radius:3px}
+.track i{position:absolute;top:-3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;border:2px solid var(--muted);background:var(--surface)}
+.track i.done{background:var(--accent);border-color:var(--accent)}
+.track i.late{background:var(--high);border-color:var(--high)}
+.track i.due{border-color:var(--mid);background:var(--mid-bg)}
+.track em{position:absolute;top:10px;font-style:normal;font-size:10px;color:var(--muted);transform:translateX(-50%)}
+.track .now{position:absolute;top:-6px;width:3px;height:18px;margin-left:-1.5px;background:var(--ink);border-radius:2px}
+
+details.fold{margin-top:22px}
+details.fold summary{cursor:pointer;color:var(--muted);font-weight:500;padding:6px 0}
+.compact{display:grid;grid-template-columns:1fr auto auto;gap:6px 14px;padding:8px 14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;align-items:center}
+.compact small{color:var(--muted)}
+
+table.t{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+table.t th,table.t td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}
+table.t th{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+table.t tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 10px;align-items:center}
+select,input[type=text],input[type=date],input[type=number],textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;max-width:100%}
+textarea{width:100%;min-height:70px;resize:vertical}
+label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);margin-bottom:10px}
+label.f input,label.f select{color:var(--ink)}
+
+.overlay{position:fixed;inset:0;background:rgba(8,14,10,.55);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:5vh 12px;z-index:20}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:100%;max-width:640px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.sheet h2{font-size:18px}
+.sheet .meta{color:var(--muted);font-size:14px;margin:4px 0 14px}
+.sheet h3{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.cp{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.cp:last-child{border-bottom:0}
+.cp .d{font-weight:700;min-width:46px}
+.cp small{color:var(--muted);display:block}
+.pill{border-radius:999px;font-size:12px;padding:2px 9px;font-weight:600;white-space:nowrap}
+.pill.done{background:var(--ok-bg);color:var(--ok)} .pill.late{background:var(--high-bg);color:var(--high)} .pill.due{background:var(--mid-bg);color:var(--mid)} .pill.wait{background:var(--soft);color:var(--muted)}
+.box{background:var(--soft);border-radius:10px;padding:12px 14px}
+.box ul{margin:6px 0 0;padding-left:18px}
+.close{float:right}
+.scale{display:flex;gap:6px;margin:6px 0 14px}
+.scale button{flex:1;padding:10px 0;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-weight:600}
+.scale button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.q{font-weight:500}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+pre.json{background:var(--soft);padding:10px;border-radius:8px;overflow:auto;font-size:12px;max-height:240px;margin:8px 0 0}
+.task{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+.task header{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:40;max-width:90vw;font-size:14px}
+footer.note{margin-top:36px;color:var(--muted);font-size:12.5px;display:flex;gap:10px 20px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.empty{padding:26px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:var(--r)}
+
+@media (max-width:760px){
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .row{grid-template-columns:1fr}
+  .row .go{justify-content:flex-start}
+  .compact{grid-template-columns:1fr auto}
+  .compact .c3{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Радар новичков</h1>
+      <p id="sub"></p>
+    </div>
+    <div class="tools">
+      <button class="btn primary" data-act="add">Добавить новичка</button>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Разделы"></nav>
+  <main id="view"></main>
+  <footer class="note">
+    <span>Данные вымышленные. Задачи для Битрикс24 собираются как запрос tasks.task.add и без адреса вебхука остаются в журнале.</span>
+    <span>
+      <button class="btn small" data-act="day">Показать завтрашний день</button>
+      <button class="btn small" data-act="reset">Сбросить демо</button>
+    </span>
+  </footer>
+</div>
+<div id="layer"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* Логика «Радара новичков»: контрольные точки, скоринг риска, сборка задачи для Битрикс24.
+   Без зависимостей. Работает и в браузере (window.Scoring), и в Node (require). */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.Scoring = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  const DAY = 86400000;
+  const GRACE = 2; // сколько дней после срока точка ещё не считается пропущенной
+
+  const OWNERS = { manager: 'Руководитель', mentor: 'Наставник', hr: 'HR' };
+
+  const CHECKPOINTS = [
+    { day: 1, title: 'Встреча, доступы, рабочее место', owner: 'manager' },
+    { day: 3, title: 'Короткий разговор: как первые дни?', owner: 'mentor' },
+    { day: 7, title: 'Пульс-опрос и беседа с руководителем', owner: 'manager', pulse: true },
+    { day: 14, title: 'Пульс-опрос, разбор задач и нагрузки', owner: 'manager', pulse: true },
+    { day: 30, title: 'Итоги месяца: ожидания и реальность', owner: 'hr', pulse: true },
+    { day: 60, title: 'Пульс-опрос, план роста', owner: 'manager', pulse: true },
+    { day: 90, title: 'Итоги испытательного срока', owner: 'hr' },
+  ];
+
+  const PULSE_QUESTIONS = [
+    'Мне понятно, что от меня ждут и как оценят мою работу',
+    'Мне есть к кому обратиться, и я получаю помощь',
+    'Я вижу себя в компании через полгода',
+  ];
+
+  const LEVELS = { high: 50, mid: 25 };
+
+  function parseDay(s) { return Math.floor(Date.parse(s + 'T00:00:00Z') / DAY); }
+  function addDays(s, n) { return new Date((parseDay(s) + n) * DAY).toISOString().slice(0, 10); }
+  function todayStr(d) { const x = d || new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); }
+
+  /** Номер дня работы: в день выхода = 1 */
+  function dayNo(person, today) { return parseDay(today) - parseDay(person.start) + 1; }
+
+  function avg(a) { return a.reduce((s, x) => s + x, 0) / a.length; }
+
+  function overdueCheckpoints(p, today) {
+    const d = dayNo(p, today);
+    return CHECKPOINTS.filter(cp => cp.day + GRACE <= d && !(p.checks && p.checks[cp.day]));
+  }
+  function dueCheckpoints(p, today) {
+    const d = dayNo(p, today);
+    return CHECKPOINTS.filter(cp => cp.day <= d && d < cp.day + GRACE && !(p.checks && p.checks[cp.day]));
+  }
+  function nextCheckpoint(p, today) {
+    const d = dayNo(p, today);
+    return CHECKPOINTS.find(cp => cp.day > d) || null;
+  }
+
+  /** Оценка риска. Правила простые и видны в списке причин, чтобы HR мог с ними спорить. */
+  function assess(p, today) {
+    const d = dayNo(p, today);
+    const reasons = [];
+    const add = (points, text, key) => reasons.push({ points, text, key });
+
+    const pulses = (p.pulses || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const last = pulses[pulses.length - 1];
+    if (last) {
+      const a = avg(last.answers);
+      if (a <= 2.5) add(35, `Пульс-опрос ${last.date}: средняя оценка ${a.toFixed(1)} из 5`, 'pulse_low');
+      else if (a <= 3.5) add(15, `Пульс-опрос ${last.date}: оценка ${a.toFixed(1)} из 5, ниже нормы`, 'pulse_mid');
+      if (last.answers[2] <= 2) add(15, 'Не видит себя в компании (вопрос 3 ≤ 2)', 'stay_low');
+      if (pulses.length >= 2) {
+        const prev = avg(pulses[pulses.length - 2].answers);
+        if (prev - a >= 1) add(10, `Оценка упала с ${prev.toFixed(1)} до ${a.toFixed(1)}`, 'pulse_drop');
+      }
+    }
+
+    const expectedPulses = CHECKPOINTS.filter(cp => cp.pulse && cp.day + GRACE <= d).length;
+    if (pulses.length < expectedPulses) add(15, 'Пульс-опрос не заполнен вовремя', 'pulse_missing');
+
+    if (!p.mentor && d >= 3) add(15, 'Нет наставника', 'no_mentor');
+
+    const overdue = overdueCheckpoints(p, today);
+    if (overdue.length) {
+      const pts = Math.min(30, overdue.length * 10);
+      add(pts, 'Пропущены встречи: ' + overdue.map(c => 'день ' + c.day).join(', '), 'overdue');
+    }
+
+    const recent = (p.absences || []).filter(a => { const k = parseDay(today) - parseDay(a); return k >= 0 && k < 14; });
+    if (recent.length >= 2) add(15, `Прогулы или опоздания за 14 дней: ${recent.length}`, 'absences');
+
+    const score = Math.min(100, reasons.reduce((s, r) => s + r.points, 0));
+    const active = d >= 1 && d <= 90;
+    const level = !active ? 'done' : score >= LEVELS.high ? 'high' : score >= LEVELS.mid ? 'mid' : 'low';
+
+    return {
+      day: d, active, score, level, reasons,
+      overdue, due: dueCheckpoints(p, today), next: nextCheckpoint(p, today),
+      action: suggestAction(p, reasons, overdue),
+    };
+  }
+
+  /** Одно главное действие: то, что HR или руководитель делает сегодня. */
+  function suggestAction(p, reasons, overdue) {
+    const has = k => reasons.some(r => r.key === k);
+    if (has('pulse_low') || has('stay_low') || has('pulse_drop'))
+      return { code: 'talk', title: 'Поговорить сегодня', text: 'Личный разговор 15 минут, не по чату. Спросить, что мешает, что непонятно, что не так с графиком или задачами. Записать ответ и договориться об одном конкретном изменении.' };
+    if (has('no_mentor'))
+      return { code: 'mentor', title: 'Назначить наставника', text: 'Выбрать опытного коллега из того же подразделения, передать ему чек-лист первых недель и договориться о встрече в первые два дня.' };
+    if (has('overdue'))
+      return { code: 'meeting', title: 'Провести пропущенную встречу', text: 'Провести встречу на этой неделе: ' + overdue.map(c => c.title.toLowerCase()).join('; ') + '.' };
+    if (has('pulse_missing'))
+      return { code: 'pulse', title: 'Получить пульс-опрос', text: 'Отправить ссылку на опрос и попросить заполнить в рабочее время. Три вопроса, одна минута.' };
+    if (has('absences'))
+      return { code: 'absence', title: 'Выяснить причину отсутствий', text: 'Спокойно спросить, что происходит с графиком: дорога, смена, семья, условия. Начать с вопроса, а не с замечания.' };
+    if (has('pulse_mid'))
+      return { code: 'check', title: 'Спросить, как дела', text: 'Короткий разговор на 5 минут в конце смены: что получается, что непонятно. Оценка в опросе ниже нормы, пока это сигнал, а не тревога.' };
+    return { code: 'none', title: 'Всё идёт по плану', text: 'Следующая встреча по плану адаптации.' };
+  }
+
+  /** Тело запроса tasks.task.add для REST Битрикс24 (вебхук). */
+  function buildBitrixTask(p, a, opts) {
+    const o = opts || {};
+    const deadline = (a.level === 'high' ? addDays(o.today, 1) : addDays(o.today, 3)) + 'T18:00:00+03:00';
+    const reasons = a.reasons.map(r => '- ' + r.text).join('\n') || '- Плановая встреча';
+    const lines = [
+      `Новичок: ${p.name}, ${p.dept}, ${p.role}. День ${a.day} из 90, риск ${a.score}/100.`,
+      '',
+      'Почему задача:',
+      reasons,
+      '',
+      'Что сделать: ' + a.action.text,
+      '',
+      'После встречи отметьте её в Радаре новичков и закройте задачу.',
+    ];
+    return {
+      method: 'tasks.task.add',
+      params: {
+        fields: {
+          TITLE: `Новичок ${p.name}: ${a.action.title.toLowerCase()}`,
+          DESCRIPTION: lines.join('\n'),
+          RESPONSIBLE_ID: o.responsibleId || 1,
+          DEADLINE: deadline,
+          PRIORITY: a.level === 'high' ? 2 : 1,
+          TAGS: ['новичок', 'адаптация'],
+        },
+      },
+    };
+  }
+
+  return { CHECKPOINTS, PULSE_QUESTIONS, OWNERS, assess, buildBitrixTask, dayNo, addDays, todayStr, parseDay, avg };
+});
+
+</script>
+<script>
+/* Демо-данные: вымышленные сотрудники, похожие на структуру компании. Реальных людей нет.
+   Даты считаются от сегодняшнего дня, чтобы демо всегда выглядело живым. Генератор детерминирован. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./scoring.js'));
+  else root.Seed = factory(root.Scoring);
+})(typeof self !== 'undefined' ? self : this, function (S) {
+  function rng(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const MANAGERS = {
+    'Склад': ['Сергей Мартынов', 'Ирина Бондарь'],
+    'Магазин': ['Елена Козловская', 'Артём Новик'],
+    'Отдел продаж': ['Павел Рубан'],
+    'Офис': ['Марина Лис'],
+  };
+  const MENTORS = {
+    'Склад': ['Виктор Л.', 'Олег С.', 'Дмитрий Ш.'],
+    'Магазин': ['Анна К.', 'Татьяна В.', 'Максим Г.'],
+    'Отдел продаж': ['Кирилл Д.', 'Наталья Р.'],
+    'Офис': ['Алла П.'],
+  };
+  const ROLES = {
+    'Склад': ['Комплектовщик', 'Кладовщик', 'Грузчик-упаковщик', 'Водитель погрузчика'],
+    'Магазин': ['Продавец-консультант', 'Кассир', 'Продавец-консультант'],
+    'Отдел продаж': ['Менеджер по продажам', 'Менеджер по работе с маркетплейсами'],
+    'Офис': ['Бухгалтер', 'Специалист по закупкам', 'Контент-менеджер'],
+  };
+  // [имя, отдел, день работы сегодня, профиль]  profile: ok | shaky | bad | silent | nomentor | late
+  const PEOPLE = [
+    ['Дмитрий Ковалёв', 'Склад', 2, 'ok'],
+    ['Алина Шевчук', 'Магазин', 1, 'ok'],
+    ['Никита Гринюк', 'Склад', 4, 'nomentor'],
+    ['Ольга Тимошенко', 'Магазин', 6, 'ok'],
+    ['Егор Лукашевич', 'Склад', 9, 'shaky'],
+    ['Вероника Мельник', 'Отдел продаж', 10, 'ok'],
+    ['Андрей Пашкевич', 'Склад', 12, 'bad'],
+    ['Яна Касперович', 'Магазин', 15, 'shaky'],
+    ['Роман Захаренко', 'Склад', 17, 'late'],
+    ['Светлана Прокопович', 'Магазин', 19, 'ok'],
+    ['Игорь Денисенко', 'Склад', 22, 'bad'],
+    ['Полина Жук', 'Отдел продаж', 26, 'shaky'],
+    ['Максим Борисенко', 'Склад', 29, 'silent'],
+    ['Диана Романович', 'Магазин', 31, 'ok'],
+    ['Артур Кравченко', 'Склад', 34, 'bad'],
+    ['Кристина Бугаева', 'Офис', 38, 'ok'],
+    ['Влад Сидорчук', 'Магазин', 42, 'late'],
+    ['Евгения Савицкая', 'Магазин', 47, 'shaky'],
+    ['Тимофей Курьянович', 'Склад', 53, 'ok'],
+    ['Марта Леонович', 'Отдел продаж', 58, 'silent'],
+    ['Глеб Станкевич', 'Склад', 63, 'bad'],
+    ['Инна Дроздова', 'Магазин', 71, 'ok'],
+    ['Константин Рудько', 'Склад', 78, 'shaky'],
+    ['Лилия Адамович', 'Офис', 86, 'ok'],
+  ];
+
+  function pick(r, arr) { return arr[Math.floor(r() * arr.length)]; }
+
+  function build(today) {
+    const r = rng(20260101);
+    return PEOPLE.map(([name, dept, day, profile], i) => {
+      const start = S.addDays(today, -(day - 1));
+      const p = {
+        id: 'n' + (i + 1), name, dept,
+        role: pick(r, ROLES[dept]),
+        start,
+        manager: pick(r, MANAGERS[dept]),
+        mentor: profile === 'nomentor' ? null : pick(r, MENTORS[dept]),
+        checks: {}, pulses: [], absences: [], notes: [],
+      };
+      const base = { ok: 4.4, shaky: 3.2, bad: 2.0, silent: 4.0, nomentor: 4.2, late: 4.0 }[profile];
+      S.CHECKPOINTS.forEach(cp => {
+        if (cp.day > day) return;
+        const passed = cp.day + 2 <= day;
+        const doneChance = profile === 'silent' ? 0.35 : profile === 'bad' ? 0.55 : 0.93;
+        if (r() < doneChance || !passed) {
+          if (passed || cp.day === day || cp.day + 1 === day) { if (r() < (passed ? 1 : 0.3)) p.checks[cp.day] = S.addDays(start, cp.day - 1); }
+        }
+        if (cp.pulse && passed) {
+          const skip = profile === 'silent' ? r() < 0.8 : r() < 0.05;
+          if (!skip) {
+            const drift = profile === 'bad' || profile === 'shaky' ? -0.35 * (S.CHECKPOINTS.filter(c => c.pulse && c.day <= cp.day).length - 1) : 0;
+            const a = [0, 1, 2].map(() => Math.max(1, Math.min(5, Math.round(base + drift + (r() - 0.5) * 1.4))));
+            if (profile === 'bad') a[2] = Math.min(a[2], 2);
+            p.pulses.push({ date: S.addDays(start, cp.day), answers: a, comment: '' });
+          }
+        }
+      });
+      if (profile === 'late') p.absences = [S.addDays(today, -1), S.addDays(today, -4), S.addDays(today, -9)].filter(d => d >= start);
+      if (profile === 'bad' && day > 8) p.absences = [S.addDays(today, -3)].filter(d => d >= start);
+      if (profile === 'bad' && day > 8) p.pulses.forEach(x => { x.comment = ''; });
+      return p;
+    });
+  }
+
+  return { build };
+});
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var S = window.Scoring, Seed = window.Seed;
+  var KEY = 'novichok.v1';
+  var DEPTS = ['Склад', 'Магазин', 'Отдел продаж', 'Офис'];
+  var MENTORS = { 'Склад': ['Виктор Л.', 'Олег С.', 'Дмитрий Ш.'], 'Магазин': ['Анна К.', 'Татьяна В.', 'Максим Г.'], 'Отдел продаж': ['Кирилл Д.', 'Наталья Р.'], 'Офис': ['Алла П.'] };
+  var LEVEL_NAME = { high: 'Позвонить сегодня', mid: 'Присмотреться', low: 'В норме' };
+
+  var state = { people: [], tasks: [], settings: { webhook: '', responsibleId: 1 }, offset: 0 };
+  var ui = { tab: 'today', open: null, pulseFor: null, adding: false, dept: 'all', level: 'all', taskView: null };
+  var memory = null;
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function $(id) { return document.getElementById(id); }
+  function realToday() { return S.todayStr(new Date()); }
+  function today() { return S.addDays(realToday(), state.offset); }
+  function fmt(d) { var p = d.split('-'); return p[2] + '.' + p[1]; }
+  function plural(n, a, b, c) { var m = n % 100, k = n % 10; if (m > 10 && m < 20) return c; if (k === 1) return a; if (k > 1 && k < 5) return b; return c; }
+
+  /* ---------- хранилище ---------- */
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { raw = memory; }
+    if (raw) {
+      try { var d = JSON.parse(raw); if (d && d.people) { state = Object.assign(state, d); return; } } catch (e) { /* пустое */ }
+    }
+    reset(false);
+  }
+  function save() {
+    var raw = JSON.stringify(state);
+    try { localStorage.setItem(KEY, raw); } catch (e) { memory = raw; }
+  }
+  function reset(doSave) {
+    state = { people: Seed.build(realToday()), tasks: [], settings: state.settings || { webhook: '', responsibleId: 1 }, offset: 0 };
+    if (doSave !== false) save();
+  }
+
+  function person(id) { return state.people.filter(function (p) { return p.id === id; })[0]; }
+  function assessAll() {
+    var t = today();
+    return state.people.map(function (p) { return { p: p, a: S.assess(p, t) }; });
+  }
+
+  function toast(msg) {
+    var el = $('toast'); el.textContent = msg; el.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(function () { el.hidden = true; }, 3800);
+  }
+
+  /* ---------- шкала 90 дней ---------- */
+  function trackHtml(p, a) {
+    var t = today(), d = a.day, h = '<div class="track" aria-hidden="true"><div class="fill" style="width:' + Math.min(100, (d - 1) / 89 * 100) + '%"></div>';
+    S.CHECKPOINTS.forEach(function (cp) {
+      var left = (cp.day - 1) / 89 * 100, cls = '';
+      if (p.checks && p.checks[cp.day]) cls = 'done';
+      else if (cp.day + 2 <= d) cls = 'late';
+      else if (cp.day <= d) cls = 'due';
+      h += '<i class="' + cls + '" style="left:' + left + '%"></i><em style="left:' + left + '%">' + cp.day + '</em>';
+    });
+    return h + '<span class="now" style="left:' + Math.min(100, (d - 1) / 89 * 100) + '%"></span></div>';
+  }
+
+  /* ---------- экраны ---------- */
+  function renderTabs() {
+    var open = state.tasks.filter(function (t) { return t.status !== 'closed'; }).length;
+    var items = [['today', 'Сегодня'], ['all', 'Все новички'], ['tasks', 'Задачи в Битрикс24' + (open ? ' · ' + open : '')]];
+    $('tabs').innerHTML = items.map(function (i) {
+      return '<a href="#' + i[0] + '"' + (ui.tab === i[0] ? ' aria-current="page"' : '') + '>' + esc(i[1]) + '</a>';
+    }).join('');
+  }
+
+  function renderToday() {
+    var all = assessAll().filter(function (x) { return x.a.active; });
+    var by = { high: [], mid: [], low: [] };
+    all.forEach(function (x) { by[x.a.level].push(x); });
+    Object.keys(by).forEach(function (k) { by[k].sort(function (x, y) { return y.a.score - x.a.score || x.a.day - y.a.day; }); });
+
+    var h = '<div class="tiles">' +
+      tile('all', all.length, 'в первых 90 днях') +
+      tile('high', by.high.length, LEVEL_NAME.high.toLowerCase(), 'high') +
+      tile('mid', by.mid.length, LEVEL_NAME.mid.toLowerCase(), 'mid') +
+      tile('low', by.low.length, 'в норме', 'low') + '</div>' +
+      '<p class="hint">Риск считается по понятным правилам: низкий пульс-опрос, нет наставника, пропущенные встречи, отсутствия. Причины видны в каждой строке.</p>';
+
+    ['high', 'mid'].forEach(function (lv) {
+      if (ui.level !== 'all' && ui.level !== lv) return;
+      if (!by[lv].length) return;
+      h += '<section class="group"><h2><span class="dot ' + lv + '"></span>' + LEVEL_NAME[lv] + ' · ' + by[lv].length + '</h2>' +
+        by[lv].map(rowHtml).join('') + '</section>';
+    });
+    if (!by.high.length && !by.mid.length) h += '<div class="empty">Сегодня никого не нужно догонять.</div>';
+    if (ui.level === 'all' || ui.level === 'low') {
+      h += '<details class="fold"' + (ui.level === 'low' ? ' open' : '') + '><summary>В норме · ' + by.low.length + '</summary>' +
+        by.low.map(function (x) {
+          return '<div class="compact"><div><b>' + esc(x.p.name) + '</b> <small>' + esc(x.p.dept) + ', день ' + x.a.day + '</small></div>' +
+            '<span class="score low">' + x.a.score + '</span><button class="btn small" data-act="open" data-id="' + x.p.id + '">Открыть</button></div>';
+        }).join('') + '</details>';
+    }
+    return h;
+  }
+  function tile(key, n, label, cls) {
+    return '<button class="tile ' + (cls || '') + '" data-act="level" data-v="' + key + '" aria-pressed="' + (ui.level === key) + '"><b class="num">' + n + '</b><span>' + esc(label) + '</span></button>';
+  }
+
+  function rowHtml(x) {
+    var p = x.p, a = x.a, top = a.reasons.slice().sort(function (m, n) { return n.points - m.points; })[0];
+    var has = hasOpenTask(p.id, a.action.code);
+    return '<article class="row">' +
+      '<div class="who"><b>' + esc(p.name) + '</b><small>' + esc(p.dept) + ' · ' + esc(p.role) + ' · день ' + a.day + ' из 90</small>' + trackHtml(p, a) + '</div>' +
+      '<div class="why"><span class="act">' + esc(a.action.title) + '</span><span class="reason">' + esc(top ? top.text : 'Плановая встреча') + '</span></div>' +
+      '<div class="go"><span class="score ' + a.level + '" title="Риск ухода, 0–100">' + a.score + '</span>' +
+      '<button class="btn small" data-act="open" data-id="' + p.id + '">Карточка</button>' +
+      (has ? '<span class="pill wait">задача создана</span>' : '<button class="btn small primary" data-act="task" data-id="' + p.id + '">Задача в Б24</button>') +
+      '</div></article>';
+  }
+
+  function renderAll() {
+    var rows = assessAll().sort(function (x, y) { return y.a.score - x.a.score; })
+      .filter(function (x) { return ui.dept === 'all' || x.p.dept === ui.dept; });
+    var h = '<div class="filters"><label>Подразделение <select id="deptSel">' +
+      ['all'].concat(DEPTS).map(function (d) { return '<option value="' + esc(d) + '"' + (ui.dept === d ? ' selected' : '') + '>' + (d === 'all' ? 'Все' : esc(d)) + '</option>'; }).join('') +
+      '</select></label><span class="hint">Показано: ' + rows.length + '</span></div>' +
+      '<div class="scroll"><table class="t"><thead><tr><th>Сотрудник</th><th>Отдел</th><th>День</th><th>Наставник</th><th>Пульс</th><th>Риск</th><th></th></tr></thead><tbody>' +
+      rows.map(function (x) {
+        var p = x.p, pl = (p.pulses || []).slice(-1)[0];
+        return '<tr><td><b>' + esc(p.name) + '</b><br><small>' + esc(p.role) + '</small></td><td>' + esc(p.dept) + '</td><td class="num">' + (x.a.active ? x.a.day : '90+') + '</td>' +
+          '<td>' + (p.mentor ? esc(p.mentor) : '<span class="pill late">нет</span>') + '</td>' +
+          '<td class="num">' + (pl ? S.avg(pl.answers).toFixed(1) : '—') + '</td>' +
+          '<td>' + (x.a.active ? '<span class="score ' + x.a.level + '">' + x.a.score + '</span>' : '<span class="pill wait">завершил</span>') + '</td>' +
+          '<td><button class="btn small" data-act="open" data-id="' + p.id + '">Открыть</button></td></tr>';
+      }).join('') + '</tbody></table></div>';
+    return h;
+  }
+
+  function renderTasks() {
+    var h = '<section class="group"><h2>Подключение к Битрикс24</h2><div class="box">' +
+      '<label class="f">Адрес входящего вебхука (https://портал.bitrix24.by/rest/ID/КЛЮЧ/)<input type="text" id="hook" value="' + esc(state.settings.webhook) + '" placeholder="https://example.bitrix24.by/rest/1/xxxxxxxx/"></label>' +
+      '<label class="f">ID ответственного по умолчанию<input type="number" id="resp" min="1" value="' + esc(state.settings.responsibleId) + '"></label>' +
+      '<button class="btn small" data-act="savehook">Сохранить</button>' +
+      '<p class="hint">Если адрес указан, задача уходит запросом tasks.task.add. Если пусто или браузер не пускает запрос, задача остаётся в журнале, а JSON можно скопировать и отправить вручную.</p></div></section>';
+    h += '<section class="group"><h2>Журнал задач · ' + state.tasks.length + '</h2>';
+    if (!state.tasks.length) h += '<div class="empty">Пока ничего нет. Создайте задачу из строки на экране «Сегодня».</div>';
+    state.tasks.slice().reverse().forEach(function (t) {
+      var st = { draft: ['wait', 'черновик, не отправлена'], sent: ['done', 'отправлена в Битрикс24'], error: ['late', 'ошибка отправки'], closed: ['done', 'закрыта'] }[t.status];
+      h += '<div class="task"><header><div><b>' + esc(t.title) + '</b><br><small>срок ' + esc(t.deadline.slice(0, 10)) + ' · создана ' + fmt(t.created) + '</small></div>' +
+        '<span class="pill ' + st[0] + '">' + st[1] + '</span></header>' +
+        '<p style="margin:8px 0 0;white-space:pre-line;font-size:14px">' + esc(t.payload.params.fields.DESCRIPTION) + '</p>' +
+        '<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">' +
+        '<button class="btn small" data-act="json" data-id="' + t.id + '">' + (ui.taskView === t.id ? 'Скрыть JSON' : 'Показать JSON') + '</button>' +
+        '<button class="btn small" data-act="copy" data-id="' + t.id + '">Скопировать JSON</button>' +
+        (t.status === 'draft' || t.status === 'error' ? '<button class="btn small primary" data-act="send" data-id="' + t.id + '">Отправить в Битрикс24</button>' : '') +
+        (t.status !== 'closed' ? '<button class="btn small" data-act="closetask" data-id="' + t.id + '">Закрыть</button>' : '') + '</div>' +
+        (ui.taskView === t.id ? '<pre class="json">' + esc(JSON.stringify(t.payload, null, 2)) + '</pre>' : '') + '</div>';
+    });
+    return h + '</section>';
+  }
+
+  function render() {
+    var t = today();
+    var act = assessAll().filter(function (x) { return x.a.active; });
+    $('sub').textContent = 'Сегодня ' + fmt(t) + (state.offset ? ' (демо: сдвиг +' + state.offset + ')' : '') + ' · на адаптации ' + act.length + ' ' + plural(act.length, 'человек', 'человека', 'человек');
+    renderTabs();
+    $('view').innerHTML = ui.tab === 'all' ? renderAll() : ui.tab === 'tasks' ? renderTasks() : renderToday();
+    renderLayer();
+  }
+
+  /* ---------- карточка, опрос, добавление ---------- */
+  function renderLayer() {
+    var h = '';
+    if (ui.open && person(ui.open)) h = cardHtml(person(ui.open));
+    else if (ui.pulseFor && person(ui.pulseFor)) h = pulseHtml(person(ui.pulseFor));
+    else if (ui.adding) h = addHtml();
+    $('layer').innerHTML = h;
+  }
+
+  function cardHtml(p) {
+    var a = S.assess(p, today()), t = today();
+    var has = hasOpenTask(p.id, a.action.code);
+    var h = '<div class="overlay" data-act="bg"><div class="sheet" role="dialog" aria-label="Карточка новичка">' +
+      '<button class="btn small close" data-act="x">Закрыть</button>' +
+      '<h2>' + esc(p.name) + '</h2><p class="meta">' + esc(p.dept) + ', ' + esc(p.role) + ' · руководитель ' + esc(p.manager) + ' · вышел ' + fmt(p.start) + ', день ' + a.day + '</p>' +
+      '<div class="box"><b>Риск ' + a.score + ' из 100 · ' + (a.level === 'done' ? 'период завершён' : LEVEL_NAME[a.level].toLowerCase()) + '</b>' +
+      (a.reasons.length ? '<ul>' + a.reasons.map(function (r) { return '<li>' + esc(r.text) + ' <small>(+' + r.points + ')</small></li>'; }).join('') + '</ul>' : '<p style="margin:6px 0 0">Тревожных сигналов нет.</p>') + '</div>' +
+      '<h3>Что сделать</h3><div class="box"><b>' + esc(a.action.title) + '</b><p style="margin:4px 0 10px">' + esc(a.action.text) + '</p>' +
+      (a.action.code === 'none' ? '' : has ? '<span class="pill wait">задача уже создана</span>' : '<button class="btn primary small" data-act="task" data-id="' + p.id + '">Создать задачу в Битрикс24</button>') + '</div>' +
+      '<h3>Наставник</h3><select id="mentorSel" data-id="' + p.id + '"><option value="">Не назначен</option>' +
+      (MENTORS[p.dept] || []).map(function (m) { return '<option' + (p.mentor === m ? ' selected' : '') + '>' + esc(m) + '</option>'; }).join('') + '</select>' +
+      '<h3>План адаптации</h3>';
+    S.CHECKPOINTS.forEach(function (cp) {
+      var done = p.checks && p.checks[cp.day], cls, label;
+      if (done) { cls = 'done'; label = 'проведена ' + fmt(done); }
+      else if (cp.day + 2 <= a.day) { cls = 'late'; label = 'пропущена'; }
+      else if (cp.day <= a.day) { cls = 'due'; label = 'сегодня-завтра'; }
+      else { cls = 'wait'; label = 'через ' + (cp.day - a.day) + ' ' + plural(cp.day - a.day, 'день', 'дня', 'дней'); }
+      h += '<div class="cp"><span class="d">День ' + cp.day + '</span><div>' + esc(cp.title) + '<small>' + esc(S.OWNERS[cp.owner]) + '</small></div>' +
+        (done ? '<span class="pill done">' + label + '</span>' : cp.day <= a.day ?
+          '<span><span class="pill ' + cls + '">' + label + '</span> <button class="btn small" data-act="check" data-id="' + p.id + '" data-day="' + cp.day + '">Отметить</button></span>' :
+          '<span class="pill wait">' + label + '</span>') + '</div>';
+    });
+    h += '<h3>Пульс-опросы</h3>';
+    var pls = (p.pulses || []).slice().reverse();
+    h += pls.length ? pls.map(function (x) { return '<div class="cp" style="grid-template-columns:auto 1fr auto"><span class="d">' + fmt(x.date) + '</span><div>' + x.answers.join(' · ') + (x.comment ? '<small>' + esc(x.comment) + '</small>' : '') + '</div><span class="pill ' + (S.avg(x.answers) <= 2.5 ? 'late' : S.avg(x.answers) <= 3.5 ? 'due' : 'done') + '">' + S.avg(x.answers).toFixed(1) + '</span></div>'; }).join('') : '<p class="hint">Опросов ещё нет.</p>';
+    h += '<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" data-act="pulse" data-id="' + p.id + '">Открыть опрос глазами новичка</button>' +
+      '<button class="btn small" data-act="absent" data-id="' + p.id + '">Записать отсутствие сегодня</button></div>' +
+      ((p.absences || []).length ? '<p class="hint">Отсутствия и опоздания: ' + p.absences.slice().sort().map(fmt).join(', ') + '</p>' : '') +
+      '</div></div>';
+    return h;
+  }
+
+  function pulseHtml(p) {
+    var ans = ui.answers || [0, 0, 0];
+    var h = '<div class="overlay"><div class="sheet" role="dialog" aria-label="Пульс-опрос">' +
+      '<button class="btn small close" data-act="x">Закрыть</button><h2>Как проходит ваша адаптация?</h2>' +
+      '<p class="meta">Три вопроса, одна минута. Ответы увидят только HR и ваш руководитель.</p>';
+    S.PULSE_QUESTIONS.forEach(function (q, i) {
+      h += '<div class="q">' + (i + 1) + '. ' + esc(q) + '</div><div class="scale">' +
+        [1, 2, 3, 4, 5].map(function (n) { return '<button data-act="ans" data-q="' + i + '" data-n="' + n + '" aria-pressed="' + (ans[i] === n) + '">' + n + '</button>'; }).join('') +
+        '</div><div class="ends" style="margin-top:-10px;margin-bottom:12px"><span>совсем нет</span><span>полностью да</span></div>';
+    });
+    h += '<label class="f">Что хотите добавить? (по желанию)<textarea id="pc" placeholder="Например: не хватает обучения по кассе"></textarea></label>' +
+      '<button class="btn primary" data-act="sendpulse" data-id="' + p.id + '"' + (ans.every(Boolean) ? '' : ' disabled') + '>Отправить</button></div></div>';
+    return h;
+  }
+
+  function addHtml() {
+    return '<div class="overlay"><div class="sheet" role="dialog" aria-label="Новый сотрудник"><button class="btn small close" data-act="x">Закрыть</button>' +
+      '<h2>Новый сотрудник</h2><p class="meta">В рабочей версии эти данные приходят из задачи приёма в Битрикс24. Здесь их вносят вручную.</p>' +
+      '<form id="addForm"><label class="f">Имя и фамилия<input type="text" id="an" required></label>' +
+      '<label class="f">Подразделение<select id="ad">' + DEPTS.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="f">Должность<input type="text" id="ar" required></label>' +
+      '<label class="f">Руководитель<input type="text" id="am" required></label>' +
+      '<label class="f">Дата выхода<input type="date" id="as" value="' + today() + '" required></label>' +
+      '<button class="btn primary" type="submit">Добавить</button> <span id="aerr" class="hint"></span></form></div></div>';
+  }
+
+  /* ---------- задачи ---------- */
+  function hasOpenTask(pid, code) {
+    return state.tasks.some(function (t) { return t.personId === pid && t.code === code && t.status !== 'closed'; });
+  }
+  function createTask(pid) {
+    var p = person(pid), a = S.assess(p, today());
+    if (a.action.code === 'none') { toast('Для этого человека задача не нужна.'); return; }
+    if (hasOpenTask(pid, a.action.code)) { toast('Открытая задача уже есть.'); return; }
+    var payload = S.buildBitrixTask(p, a, { today: today(), responsibleId: Number(state.settings.responsibleId) || 1 });
+    var task = { id: 't' + Date.now() + Math.floor(Math.random() * 1000), personId: pid, code: a.action.code, level: a.level, title: payload.params.fields.TITLE, deadline: payload.params.fields.DEADLINE, created: today(), status: 'draft', payload: payload };
+    state.tasks.push(task); save();
+    if (state.settings.webhook) { send(task.id); } else { toast('Задача создана в журнале. Вебхук не указан, в Битрикс24 она не отправлена.'); render(); }
+  }
+  function send(tid) {
+    var t = state.tasks.filter(function (x) { return x.id === tid; })[0];
+    if (!t) return;
+    var url = state.settings.webhook;
+    if (!url) { toast('Укажите адрес вебхука на вкладке «Задачи в Битрикс24».'); return; }
+    var ep = url.replace(/\/?$/, '/') + t.payload.method + '.json';
+    fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(t.payload.params) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.result) { t.status = 'sent'; toast('Задача отправлена в Битрикс24.'); } else { t.status = 'error'; toast('Битрикс24 вернул ошибку: ' + ((j && (j.error_description || j.error)) || 'без текста')); }
+        save(); render();
+      })
+      .catch(function () { t.status = 'error'; save(); toast('Запрос не прошёл: браузер или сеть не пускают. JSON можно скопировать.'); render(); });
+  }
+
+  /* ---------- события ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]');
+    if (!el) return;
+    var act = el.getAttribute('data-act'), id = el.getAttribute('data-id');
+    if (act === 'bg') { if (e.target !== el) return; ui.open = null; ui.pulseFor = null; ui.adding = false; return render(); }
+    if (act === 'x') { ui.open = null; ui.pulseFor = null; ui.adding = false; ui.answers = null; return render(); }
+    if (act === 'add') { ui.adding = true; return render(); }
+    if (act === 'open') { ui.open = id; return render(); }
+    if (act === 'level') { var v = el.getAttribute('data-v'); ui.level = ui.level === v ? 'all' : v; return render(); }
+    if (act === 'task') { createTask(id); return render(); }
+    if (act === 'check') {
+      var p = person(id); p.checks = p.checks || {}; p.checks[el.getAttribute('data-day')] = today(); save(); toast('Встреча отмечена.'); return render();
+    }
+    if (act === 'absent') { var q = person(id); q.absences = q.absences || []; if (q.absences.indexOf(today()) < 0) q.absences.push(today()); save(); return render(); }
+    if (act === 'pulse') { ui.pulseFor = id; ui.open = null; ui.answers = [0, 0, 0]; return render(); }
+    if (act === 'ans') { ui.answers[Number(el.getAttribute('data-q'))] = Number(el.getAttribute('data-n')); var c = $('pc'); var keep = c ? c.value : ''; render(); if ($('pc')) $('pc').value = keep; return; }
+    if (act === 'sendpulse') {
+      var pp = person(id), com = $('pc').value.trim();
+      pp.pulses = pp.pulses || []; pp.pulses.push({ date: today(), answers: ui.answers.slice(), comment: com });
+      ui.pulseFor = null; ui.open = id; ui.answers = null; save(); toast('Спасибо, ответ записан.'); return render();
+    }
+    if (act === 'savehook') { state.settings.webhook = $('hook').value.trim(); state.settings.responsibleId = Number($('resp').value) || 1; save(); return toast('Настройки сохранены.'); }
+    if (act === 'json') { ui.taskView = ui.taskView === id ? null : id; return render(); }
+    if (act === 'copy') {
+      var t = state.tasks.filter(function (x) { return x.id === id; })[0], txt = JSON.stringify(t.payload, null, 2);
+      var ok = function () { toast('JSON скопирован.'); };
+      var no = function () { ui.taskView = id; render(); toast('Не удалось скопировать автоматически. JSON открыт, выделите его вручную.'); };
+      try { navigator.clipboard.writeText(txt).then(ok, no); } catch (err) { no(); }
+      return;
+    }
+    if (act === 'send') return send(id);
+    if (act === 'closetask') { state.tasks.filter(function (x) { return x.id === id; })[0].status = 'closed'; save(); return render(); }
+    if (act === 'day') { state.offset += 1; save(); toast('Показан следующий день: пропущенные встречи и риски пересчитаны.'); return render(); }
+    if (act === 'reset') { reset(); ui.open = null; ui.pulseFor = null; ui.level = 'all'; toast('Демо-данные восстановлены.'); return render(); }
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.id === 'deptSel') { ui.dept = e.target.value; render(); }
+    if (e.target.id === 'mentorSel') { person(e.target.getAttribute('data-id')).mentor = e.target.value || null; save(); render(); }
+  });
+  document.addEventListener('submit', function (e) {
+    if (e.target.id !== 'addForm') return;
+    e.preventDefault();
+    var start = $('as').value, diff = S.parseDay(today()) - S.parseDay(start);
+    if (diff < -14 || diff > 100) { $('aerr').textContent = 'Дата выхода должна быть не раньше 100 дней назад и не позже чем через 2 недели.'; return; }
+    state.people.push({ id: 'n' + Date.now(), name: $('an').value.trim(), dept: $('ad').value, role: $('ar').value.trim(), manager: $('am').value.trim(), start: start, mentor: null, checks: {}, pulses: [], absences: [] });
+    ui.adding = false; save(); toast('Сотрудник добавлен. Наставника назначьте в карточке.'); render();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && (ui.open || ui.pulseFor || ui.adding)) { ui.open = null; ui.pulseFor = null; ui.adding = false; render(); }
+  });
+  function route() {
+    var h = (location.hash || '').replace('#', '');
+    ui.tab = ['today', 'all', 'tasks'].indexOf(h) >= 0 ? h : 'today';
+    render();
+  }
+  window.addEventListener('hashchange', route);
+
+  load();
+  route();
+})();
+
+</script>
+
+</html>
